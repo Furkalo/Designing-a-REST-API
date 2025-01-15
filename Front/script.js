@@ -7,81 +7,146 @@ const books = [
     title: "Book A",
     author: "Author 1",
     category: "Category X",
-    description: "Description of Book A.",
+    description: "This is a description of Book A.",
   },
   {
     id: 2,
     title: "Book B",
     author: "Author 2",
     category: "Category Y",
-    description: "Description of Book B.",
+    description: "This is a description of Book B.",
+  },
+];
+const authors = [
+  { id: 1, name: "Author 1", bio: "Author 1 is a famous writer." },
+  {
+    id: 2,
+    name: "Author 2",
+    bio: "Author 2 is known for their thrilling novels.",
+  },
+];
+const categories = [
+  {
+    id: 1,
+    name: "Category X",
+    description: "Category X includes fiction.",
   },
   {
-    id: 3,
-    title: "Book C",
-    author: "Author 3",
-    category: "Category Z",
-    description: "Description of Book C.",
+    id: 2,
+    name: "Category Y",
+    description: "Category Y includes non-fiction.",
   },
-];
-
-const authors = [
-  { id: 1, name: "Author 1" },
-  { id: 2, name: "Author 2" },
-  { id: 3, name: "Author 3" },
-];
-
-const categories = [
-  { id: 1, name: "Category X" },
-  { id: 2, name: "Category Y" },
-  { id: 3, name: "Category Z" },
 ];
 
 const contentDiv = document.getElementById("content");
 
-// Display a list of items
 function displayList(items, type) {
   contentDiv.innerHTML =
     "<ul>" +
     items
       .map(
         (item) =>
-          `<li data-id="${item.id}" data-type="${type}">${
+          `<li data-id="${item.id}" data-type="${type}">
+            <span onclick="displayDetails(${item.id}, '${type}')">${
             item.name || item.title
-          }</li>`
+          }</span>
+            <button onclick="deleteItem(${item.id}, '${type}')">Delete</button>
+          </li>`
       )
       .join("") +
     "</ul>";
-
-  const listItems = document.querySelectorAll("li");
-  listItems.forEach((item) => {
-    item.addEventListener("click", (event) => {
-      const id = event.target.dataset.id;
-      const itemType = event.target.dataset.type;
-      if (itemType === "books") {
-        displayBookDetails(id);
-      }
-    });
-  });
+  contentDiv.innerHTML += `
+    <button onclick="displayAddForm('${type}')">Add ${type.slice(
+    0,
+    -1
+  )}</button>
+  `;
 }
 
-// Display book details
-function displayBookDetails(bookId) {
-  const book = books.find((b) => b.id == bookId);
-  if (book) {
+function displayDetails(id, type) {
+  let item;
+  if (type === "books") {
+    item = books.find((b) => b.id === id);
     contentDiv.innerHTML = `
-      <div class="details">
-        <h2>${book.title}</h2>
-        <p><strong>Author:</strong> ${book.author}</p>
-        <p><strong>Category:</strong> ${book.category}</p>
-        <p><strong>Description:</strong> ${book.description}</p>
+        <h2>${item.title}</h2>
+        <p><strong>Author:</strong> ${item.author}</p>
+        <p><strong>Category:</strong> ${item.category}</p>
+        <p><strong>Description:</strong> ${item.description}</p>
         <button onclick="displayList(books, 'books')">Back to Books</button>
-      </div>
-    `;
+      `;
+  } else if (type === "authors") {
+    item = authors.find((a) => a.id === id);
+    contentDiv.innerHTML = `
+        <h2>${item.name}</h2>
+        <p><strong>Bio:</strong> ${item.bio}</p>
+        <button onclick="displayList(authors, 'authors')">Back to Authors</button>
+      `;
+  } else if (type === "categories") {
+    item = categories.find((c) => c.id === id);
+    contentDiv.innerHTML = `
+        <h2>${item.name}</h2>
+        <p><strong>Description:</strong> ${item.description}</p>
+        <button onclick="displayList(categories, 'categories')">Back to Categories</button>
+      `;
   }
 }
 
-// Event listeners for buttons
+function deleteItem(id, type) {
+  let list;
+  if (type === "books") list = books;
+  else if (type === "authors") list = authors;
+  else if (type === "categories") list = categories;
+  const index = list.findIndex((item) => item.id === id);
+  if (index > -1) list.splice(index, 1);
+  displayList(list, type);
+}
+
+function addItem(item, type) {
+  let list;
+  if (type === "books") list = books;
+  else if (type === "authors") list = authors;
+  else if (type === "categories") list = categories;
+  list.push({ id: Date.now(), ...item });
+  displayList(list, type);
+}
+
+function displayAddForm(type) {
+  const fields =
+    type === "books"
+      ? ` 
+        <label>Title: <input type="text" id="title" required></label><br>
+        <label>Author: <input type="text" id="author" required></label><br>
+        <label>Category: <input type="text" id="category" required></label><br>
+        <label>Description: <textarea id="description" required></textarea></label><br>
+      `
+      : `<label>Name: <input type="text" id="name" required></label><br>
+           <label>Description: <textarea id="description"></textarea></label><br>`;
+
+  contentDiv.innerHTML = `
+    <form id="addForm">
+      ${fields}
+      <button type="submit">Add</button>
+    </form>
+    <button onclick="displayList(${type}, '${type}')">Back</button>
+  `;
+
+  const form = document.getElementById("addForm");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (type === "books") {
+      const title = document.getElementById("title").value;
+      const author = document.getElementById("author").value;
+      const category = document.getElementById("category").value;
+      const description = document.getElementById("description").value;
+      addItem({ title, author, category, description }, type);
+    } else {
+      const name = document.getElementById("name").value;
+      const description = document.getElementById("description").value;
+      addItem({ name, description }, type);
+    }
+  });
+}
+
 document
   .getElementById("showBooks")
   .addEventListener("click", () => displayList(books, "books"));
@@ -91,3 +156,4 @@ document
 document
   .getElementById("showCategories")
   .addEventListener("click", () => displayList(categories, "categories"));
+
